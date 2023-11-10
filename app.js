@@ -136,28 +136,73 @@ app.get("/agenda/", async (request, response) => {
   );
 });
 
+/* API 4
+Path: /todos/
+Method: POST
+Description:
+Create a todo in the todo table,
+
+Request
+{
+  "id": 6,
+  "todo": "Finalize event theme",
+  "priority": "LOW",
+  "status": "TO DO",
+  "category": "HOME",
+  "dueDate": "2021-02-22"
+}
+Response
+Todo Successfully Added 
+
 app.post("/todos/", async (request, response) => {
-  const { todo, priority, status, category, dueDate } = request.body;
+  const { id, todo, priority, status, category, dueDate } = request.body;
 
   if (!todo || !priority || !status || !category || !dueDate) {
     return response.status(400).send("Invalid Data");
   }
 
-  if (
-    !isValidStatus(status) ||
-    !isValidPriority(priority) ||
-    !isValidCategory(category) ||
-    !isValidDateFormat(dueDate)
-  ) {
+  try {
+    const postTodoQuery = `
+      INSERT INTO todo (id, todo, priority, status, category, due_date)
+      VALUES (${id}, '${todo}', '${priority}', '${status}', '${category}', '${dueDate}');`;
+
+    const todoAdded = await database.run(postTodoQuery);
+    response.send("Todo Successfully Added");
+  } catch (error) {
+    response.status(500).send("Internal Server Error");
+  }
+}); */
+
+app.post("/todos/", async (request, response) => {
+  const { id, todo, priority, status, category, dueDate } = request.body;
+
+  if (!todo || !priority || !status || !category || !dueDate) {
     return response.status(400).send("Invalid Data");
   }
 
   try {
+    if (!isValidStatus(status)) {
+      return response.status(400).send("Invalid Todo Status");
+    }
+
+    if (!isValidPriority(priority)) {
+      return response.status(400).send("Invalid Todo Priority");
+    }
+
+    if (!isValidCategory(category)) {
+      return response.status(400).send("Invalid Todo Category");
+    }
+
+    if (!isValidDateFormat(dueDate)) {
+      return response.status(400).send("Invalid Due Date");
+    }
+
     const postTodoQuery = `
-      INSERT INTO todo (todo, priority, status, category, due_date)
-      VALUES ('${todo}', '${priority}', '${status}', '${category}', '${dueDate}');`;
+      INSERT INTO todo (id, todo, priority, status, category, due_date)
+      VALUES (${id}, '${todo}', '${priority}', '${status}', '${category}', '${dueDate}');`;
 
     await database.run(postTodoQuery);
+
     response.send("Todo Successfully Added");
   } catch (error) {
     response.status(500).send("Internal Server Error");
@@ -247,7 +292,12 @@ app.delete("/todos/:todoId/", async (request, response) => {
 
 module.exports = app;
 
-/* const express = require("express");
+/* if (todoAdded.changes === 1) {
+    response.send("Todo Successfully Added");
+  }
+
+
+const express = require("express");
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
 const path = require("path");
